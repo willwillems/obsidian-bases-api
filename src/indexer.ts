@@ -171,15 +171,38 @@ async function loadAssets(): Promise<Map<string, string>> {
 
 const EMBED_RE = /!\[\[([^\]]+)\]\]/g;
 
-/** Bare asset filenames referenced by a note's body (non-markdown embeds). */
-export function referencedAssets(body: string): string[] {
+/** Normalize a wikilink target to a bare asset filename, or null when it
+ * points at another note/base (a transclusion, not an asset). */
+function assetTarget(raw: string): string | null {
+  let t = raw.split("|")[0].split("#")[0].trim();
+  t = t.split("/").pop() ?? t;
+  if (/\.(md|base)$/i.test(t) || !t.includes(".")) return null;
+  return t;
+}
+
+/** Bare asset filenames referenced by a note: body embeds (`![[x.png]]`)
+ * plus wikilinks in frontmatter values (`cover: "[[x.png]]"`). */
+export function referencedAssets(
+  body: string,
+  fm: Record<string, unknown>,
+): string[] {
   const out = new Set<string>();
   for (const m of body.matchAll(EMBED_RE)) {
-    let t = m[1].split("|")[0].split("#")[0].trim();
-    t = t.split("/").pop() ?? t;
-    if (/\.(md|base)$/i.test(t) || !t.includes(".")) continue; // note transclusion
-    out.add(t);
+    const t = assetTarget(m[1]);
+    if (t) out.add(t);
   }
+  // LINK_RE also matches the inner part of `![[...]]`, so frontmatter
+  // embeds and plain property links are both covered.
+  const walk = (v: unknown): void => {
+    if (typeof v === "string") {
+      for (const m of v.matchAll(LINK_RE)) {
+        const t = assetTarget(m[1]);
+        if (t) out.add(t);
+      }
+    } else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") Object.values(v).forEach(walk);
+  };
+  walk(fm);
   return [...out];
 }
 
@@ -266,7 +289,7 @@ export async function buildIndex(): Promise<VaultIndex> {
 
   const allowedAssets = new Set<string>();
   for (const n of reachable) {
-    for (const ref of referencedAssets(n.body)) {
+    for (const ref of referencedAssets(n.body, n.frontmatter)) {
       const key = ref.toLowerCase();
       if (assetsByName.has(key)) allowedAssets.add(key);
     }

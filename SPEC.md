@@ -96,7 +96,10 @@ A note is **reachable over GET** iff **both**:
   allowlist during indexing; every other file under `assets/` (and anywhere else
   in the vault) 404s. This prevents private attachments (e.g. `Brief.pdf`,
   scanned PDFs) from leaking over the public GET surface.
-- Only **non-markdown** embed targets are treated as assets; `![[Some Note]]`
+- A note references an asset via a body embed (`![[IMG_4640.jpeg]]`) **or** a
+  wikilink in a frontmatter property value (e.g. `cover: "[[photo.png]]"`);
+  both count toward the allowlist and the note's `assets` map.
+- Only **non-markdown** targets are treated as assets; `![[Some Note]]`
   transclusions of other notes are out of scope for now.
 - Serve with correct `Content-Type`, `ETag`, and long-lived `Cache-Control`;
   support range requests for large PDFs/media.

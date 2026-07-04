@@ -40,7 +40,7 @@ function excerpt(body: string, len = 200): string {
 
 function assetMap(index: VaultIndex, note: Note): Record<string, string> {
   const map: Record<string, string> = {};
-  for (const ref of referencedAssets(note.body)) {
+  for (const ref of referencedAssets(note.body, note.frontmatter)) {
     if (index.allowedAssets.has(ref.toLowerCase())) {
       map[ref] = `/api/assets/${encodeURIComponent(ref)}`;
     }
