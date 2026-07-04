@@ -1,0 +1,2 @@
+# Machine-specific tests that run against the author's real vault.
+src/local_test.ts
