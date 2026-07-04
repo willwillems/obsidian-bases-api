@@ -2,7 +2,8 @@
 
 Read-mostly HTTP API over the Obsidian vault at `/home/sprite/vault`, derived
 from the Bases in `Templates/Bases/*.base`. Deno + Hono, runs as the Sprite
-service `obsidian-api` on port 8080. See `SPEC.md` for the full design.
+service `obsidian-api` on port 8080. See `SPEC.md` for the full design and
+`TUTORIAL.md` for setting this up on your own Sprite from scratch.
 
 ## Model
 
