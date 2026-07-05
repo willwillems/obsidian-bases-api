@@ -66,32 +66,25 @@ export function outgoingLinks(
   return [...out];
 }
 
-/** A note opts in via the `public` key, but an explicit `public: false`
- * (or `no`, which YAML parses to false) means private. Bare `public:` (null),
- * `public: true` and string slugs remain public. */
+/** A note opts in via a `public` frontmatter key whose value is a non-empty
+ * string — that string is the slug. Any other value (`true`, `false`, bare
+ * `public:`, empty string) means private, so a half-filled property from a
+ * template or Obsidian's properties UI never publishes a note. */
 export function isPublic(fm: Record<string, unknown>): boolean {
-  return Object.prototype.hasOwnProperty.call(fm, "public") &&
-    fm.public !== false;
+  return typeof fm.public === "string" && fm.public.trim() !== "";
 }
 
-export function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
-
-/** Resolve a note's slug, or null if the `public` value is invalid. */
+/** Resolve a note's slug from its `public` value (a non-empty string —
+ * guaranteed by isPublic), or null if it can't serve as a path segment. */
 function computeSlug(n: Note): string | null {
-  const pub = n.frontmatter.public;
-  if (typeof pub === "string" && pub.trim() !== "") {
-    const s = pub.trim();
-    if (s.includes("/")) {
-      console.warn(
-        `[index] invalid slug (contains '/'), excluding note: ${n.relPath} -> "${s}"`,
-      );
-      return null;
-    }
-    return s;
+  const s = String(n.frontmatter.public).trim();
+  if (s.includes("/")) {
+    console.warn(
+      `[index] invalid slug (contains '/'), excluding note: ${n.relPath} -> "${s}"`,
+    );
+    return null;
   }
-  return slugify(n.name);
+  return s;
 }
 
 async function* walkFiles(dir: string): AsyncGenerator<string> {

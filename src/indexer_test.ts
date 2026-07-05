@@ -1,18 +1,15 @@
 import { assertEquals } from "jsr:@std/assert@^1";
-import { isPublic, referencedAssets, slugify } from "./indexer.ts";
+import { isPublic, referencedAssets } from "./indexer.ts";
 
-Deno.test("isPublic: key must be present and not explicitly false", () => {
+Deno.test("isPublic: only a non-empty string slug publishes a note", () => {
   assertEquals(isPublic({}), false); // no key -> private
   assertEquals(isPublic({ public: false }), false); // explicit opt-out
-  assertEquals(isPublic({ public: null }), true); // bare `public:` key
-  assertEquals(isPublic({ public: true }), true);
-  assertEquals(isPublic({ public: "" }), true); // falls back to filename slug
+  assertEquals(isPublic({ public: null }), false); // bare `public:` key
+  assertEquals(isPublic({ public: true }), false); // no slug -> private
+  assertEquals(isPublic({ public: "" }), false); // empty value -> private
+  assertEquals(isPublic({ public: "   " }), false); // whitespace-only -> private
+  assertEquals(isPublic({ public: 42 }), false); // non-string -> private
   assertEquals(isPublic({ public: "my-slug" }), true);
-});
-
-Deno.test("slugify collapses non-alphanumerics and trims dashes", () => {
-  assertEquals(slugify("Hello, World!"), "hello-world");
-  assertEquals(slugify("  --Weird__Name--  "), "weird-name");
 });
 
 Deno.test("referencedAssets: body embeds, skipping note transclusions", () => {

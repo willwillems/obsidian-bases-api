@@ -7,11 +7,10 @@ service `obsidian-api` on port 8080. See `SPEC.md` for the full design and
 
 ## Model
 
-- A note is **GET-readable** iff it has a `public` frontmatter key (with any
-  value except an explicit `false`) **and**
-  matches a base's filter. The `public` value is its slug
-  (`/api/<base>/<slug>`); empty `public` falls back to the slugified filename;
-  a slug containing `/` is rejected.
+- A note is **GET-readable** iff its `public` frontmatter key is a non-empty
+  string **and** it matches a base's filter. That string is its slug
+  (`/api/<base>/<slug>`). Any other `public` value (`true`, `false`, bare
+  `public:`, empty) means private; a slug containing `/` is rejected.
 - **GET is public** (no auth). **POST requires** `Authorization: Bearer <API_KEY>`.
 - Every request triggers `ob sync` (debounced to `SYNC_TTL_MS`, default 10s);
   the in-memory index rebuilds when the vault changes. POST syncs immediately.

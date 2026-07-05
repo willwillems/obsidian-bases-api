@@ -34,10 +34,10 @@ cd ~/api && deno task test
 
 - **Routes come from Bases**: every `Templates/Bases/<Name>.base` becomes
   `/api/<name>`. A base's `filters` decide which notes belong to it.
-- **Notes opt in** with a `public` frontmatter key. Its value is the note's
-  slug (`/api/<base>/<slug>`); an empty `public:` falls back to the slugified
-  filename; `public: false` keeps it private. Everything else — and every
-  asset not referenced by a public note — is never served.
+- **Notes opt in** with a `public` frontmatter key whose value is a non-empty
+  string: the note's slug (`/api/<base>/<slug>`). Anything else (`public: true`,
+  a bare `public:`, `public: false`) keeps it private. Everything else — and
+  every asset not referenced by a public note — is never served.
 
 ## 5. Create the service
 

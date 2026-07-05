@@ -24,16 +24,19 @@ when idle.
 ## Access model
 
 A note is **reachable over GET** iff **both**:
-1. it has a `public` frontmatter key whose value is not an explicit `false`
-   (`public: false` / `public: no` means private), **and**
+1. it has a `public` frontmatter key whose value is a **non-empty string** —
+   that string is the note's slug. Any other value (`public: true`, bare
+   `public:`, empty string, `public: false`) means private, so a half-filled
+   property from a template or Obsidian's properties UI never publishes a
+   note, **and**
 2. it matches at least one base's filter (reached via that base's route).
 
-- **Identifier / slug** = the `public` value. If `public` is present but empty,
-  fall back to the slugified filename.
+- **Identifier / slug** = the `public` string, trimmed. There is no fallback:
+  no string, no slug, not served.
 - **Slug collisions** (two reachable notes resolve to the same slug within a
   base): serve *neither*, log it, and surface it in `/api/_health`.
-- **GET is public** (no auth). The `public` flag is the opt-in; notes without it
-  (e.g. Daily, Meetings) never surface even though all bases are routed.
+- **GET is public** (no auth). The `public` slug is the opt-in; notes without
+  one (e.g. Daily, Meetings) never surface even though all bases are routed.
 - **POST is Bearer-key gated.** Key generated at setup, stored as the service's
   `API_KEY` env var, shown once, never exposed over HTTP.
 
@@ -45,7 +48,7 @@ A note is **reachable over GET** iff **both**:
 | GET  | `/api/:base` | public | list of reachable notes for the base: `{ id, title, frontmatter, excerpt }`; respects the base's `sort`; supports `?limit` & `?offset` |
 | GET  | `/api/:base/:id` | public | one note: `{ id, title, frontmatter, body, assets }` (raw markdown + asset map) |
 | GET  | `/api/assets/:filename` | public | serve an asset **iff** it is referenced by a reachable public note; 404 otherwise |
-| POST | `/api/:base` | **Bearer** | create note from `{ title, body, frontmatter? }`; sets `categories: "[[<Base>.base]]"`; **409** if name/slug already exists; note is public only if the caller passes a `public` field |
+| POST | `/api/:base` | **Bearer** | create note from `{ title, body, frontmatter? }`; sets `categories: "[[<Base>.base]]"`; **409** if name/slug already exists; note is public only if the caller passes a non-empty `public` string slug |
 | GET  | `/api/_health` | public | base list, note counts, slug collisions, last-sync time — **no secrets** |
 
 - `:base` maps case-insensitively to `Templates/Bases/<Base>.base`.
@@ -112,7 +115,8 @@ A note is **reachable over GET** iff **both**:
 - Filename derived from `title`, sanitized against path traversal.
 - **409 Conflict** if a note with that name/slug already exists (never
   overwrite, never auto-suffix).
-- Note is GET-readable only if the caller included a `public` value.
+- Note is GET-readable only if the caller included a non-empty `public` string
+  slug.
 
 ## Security
 
